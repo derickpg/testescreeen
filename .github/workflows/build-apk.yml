@@ -24,24 +24,28 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK manually
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Install Android SDK packages
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
-          sdkmanager --install \
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"
+
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "sdkmanager não encontrado em: $SDKMANAGER"
+            echo "Conteúdo de cmdline-tools:"
+            ls -la "$ANDROID_HOME/cmdline-tools/" || true
+            exit 1
+          fi
+
+          yes | "$SDKMANAGER" --licenses || true
+
+          "$SDKMANAGER" --install \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0"
-
-      - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses || true
 
       - name: Grant execute permission to Gradle wrapper
         run: |
